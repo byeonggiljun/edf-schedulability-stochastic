@@ -17,5 +17,5 @@
 - [x] Do not exceed the maximum time.
 - [x] Check whether a task has violated the deadline.
     - [x] Drop the task if deadline violation occurs.
-- [ ] Reschedule if a task has failed.
+- [x] Reschedule if a task has failed.
 - [ ] Apply N, the maximum allowed number of re-execution and M, the least required number of successive successful execution.
