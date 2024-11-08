@@ -19,4 +19,4 @@
     - [x] Drop the task if deadline violation occurs.
 - [x] Reschedule if a task has failed.
 - [x] Apply N, the maximum allowed number of re-execution;
-- [ ] and M, the least required number of successive successful execution.
+- [x] and M, the least required number of successive successful execution.
