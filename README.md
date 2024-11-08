@@ -1,7 +1,7 @@
 # EDF Schedulability Test
 ## How to use
 1. Modify 'sample.csv' with your task set
-2. Run `python3 main.py [-t TIMEOUT] [-d] sample.csv`
+2. Run `python3 main.py [-t TIMEOUT] [-n NMAX] [-m MIN] sample.csv`
 3. Check 'output_sample.csv'
 4. Test with your own task sets by modifying sample.csv.
 
