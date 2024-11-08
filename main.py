@@ -58,6 +58,11 @@ def initialize_tasks():
 def execute_task(task, until):
   global current_time
   execution_time = until - current_time
+  if execution_time < 0:
+    sys.exit("Error: the time tries to go back.")
+  elif execution_time == 0:
+    # TODO: Is this an error?
+    print(f"Warning: The task is peeked {task.id} but the execution time is 0.")
   task.remaining_exec_time = task.remaining_exec_time - execution_time
   current_time = until
 
@@ -173,9 +178,11 @@ def edf_schedulability_test():
     logging.debug(f"Advance the current time to {current_time}")
     if logging.getLogger().isEnabledFor(logging.DEBUG):
       print_list(tasks)
-    if current_time >= timeout:
+    if current_time == timeout:
       logging.debug("Timeout occurs")
       output.append([current_time, 'timeout', -1, -1, -1, -1, -1])
+    elif current_time > timeout:
+      sys.exit("Error: the current time exceeds the timeout time.")
 
 def print_list(list):
   for element in list:
