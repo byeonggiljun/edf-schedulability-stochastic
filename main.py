@@ -90,13 +90,18 @@ def execute_task(task, until):
 def reschedule_task(task, has_failed=False):
   id = task.id
   task.remaining_exec_time = task_set_info[id][1] # Execution time
-  if has_failed:
+  print(f"Time: {current_time} ID: {task.id}, num_success: {task.num_success}")
+  if not has_failed and task.num_success == min_success:
+    # We don't need to reexecute this task again. Schedule the next task.
+    logger.verbose(f"The task {task.id} reaches the minimum required successful execution.")
+    print(f"The task {task.id} reaches the minimum required successful execution.")
+  else:
+    # The execution was not successful or the number of successful execution is not enough.
     if task.num_reexec < max_reexec:
       # The number of reexecution does not exceed the boundary.
       if current_time < task.deadline:
-        logger.verbose(f"Reschedule the task {task.id} cause it has failed.")
+        logger.verbose(f"Reschedule the task {task.id}. Is the last attempt failed: {has_failed}. The number of successful execution: {task.num_success}")
         # Can schedule the same task again.
-        # TODO: Check max_reexec
         task.arrival_time = current_time
         task.num_reexec += 1
         output.append([current_time, 'reschedule', id, task.arrival_time,
@@ -104,7 +109,7 @@ def reschedule_task(task, has_failed=False):
         return
       elif current_time == task.deadline:
         # Can't schedule the task again (automatically drop it). Instead, schedule the next task.
-        logger.debug(f"Current time {current_time} is identical to the deadline {task.deadline}. Can't re-execute.")
+        logger.verbose(f"Current time {current_time} is identical to the deadline {task.deadline}. Can't re-execute.")
         task.num_reexec += 1
         output.append([current_time, 'drop(violation)', id, current_time,
                         task.remaining_exec_time, task.deadline, -1, task.num_reexec, task.num_success])
@@ -118,6 +123,7 @@ def reschedule_task(task, has_failed=False):
 
   # Schedule the next task.
   task.num_reexec = 0
+  task.num_success = 0
   task.arrival_time = task.deadline
   task.deadline = task.arrival_time + task_set_info[id][2] # Arrival time + Period
 
@@ -177,11 +183,14 @@ def edf_schedulability_test():
           fail = False
           if has_failed(task_set_info[task_to_process.id][3]):
             print(f"The test has failed with the proability {task_set_info[task_to_process.id][3]}")
+            task_to_process.num_success = 0
             fail = True
-          output.append([current_time, 'success', task_to_process.id, task_to_process.arrival_time,
+          else:
+            print(f"The test has succeeded with the proability {1 - task_set_info[task_to_process.id][3]}.")
+            task_to_process.num_success += 1
+          output.append([current_time, 'finish', task_to_process.id, task_to_process.arrival_time,
                          task_to_process.remaining_exec_time, task_to_process.deadline, fail, 
                          task.num_reexec, task.num_success])
-          # TODO: Check min_success
           # Schedule the next task
           reschedule_task(task_to_process, fail)
         elif time_to_advance == task_to_process.deadline:
