@@ -1,9 +1,12 @@
 # EDF Schedulability Test
-## How to use
+## Schedualability Test
+1. `cd schedulability-test`
 1. Modfiy 'input.csv' with your task set
 2. Run `python3 main.py [-t TIMEOUT] [-d] sample.csv`
 3. Check 'output_sample.csv'
 4. Test with your own taks sets by modifying sample.csv.
+
+## Build a random 
 
 ## Policies
 1. A task needs to be finished before the next same task comes (deadline = next period). 
@@ -20,3 +23,9 @@
 - [x] Reschedule if a task has failed.
 - [x] Apply N, the maximum allowed number of re-execution;
 - [x] and M, the least required number of successive successful execution.
+- [ ] Create a random task set generator
+    - [ ] Assign N, NU, and lambda
+    - [ ] Divide NU to N tasks
+        - [ ] Use the execution time of each task (provided)
+        - [ ] Determine the period
+    - [ ] Generate 1000 task sets for each N, NU, and lambda

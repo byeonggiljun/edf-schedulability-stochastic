@@ -26,7 +26,7 @@ output_log = []
 output_num_violation = []
 
 max_reexec = 0
-min_success = 0
+min_success = 1
 
 @dataclass
 class Task:
@@ -49,7 +49,7 @@ def readCSV(input_file):
   try:
     df = pd.read_csv(input_file)
     # task_set_info = df.values.tolist()
-    task_set_info = [[int(row[0]), int(row[1]), int(row[2]), float(row[3])] for row in df.values]
+    task_set_info = [[int(row[0]), int(row[1]), int(row[2]), float(row[3]), float(row[4])] for row in df.values]
     if len(task_set_info) == 0:
         sys.exit("No task to process.")
   except Exception as e:
@@ -58,11 +58,19 @@ def readCSV(input_file):
 def return_arrival_time(task):
   return task.arrival_time
 
-# Check whether the task has failed or not.
-# This function returns 1 with probability p.
-def has_failed(p):
-  fail = 1 if random.random() < p else 0
-  return fail
+# Check whether a DUE has occured or not.
+# This function returns 1 with probability p_due (per execution).
+def due_check(task):
+  p_due = task_set_info[task.id][3]
+  due = 1 if random.random() < p_due else 0
+  return due
+
+# Check the case is benign or not.
+# This function returns 1 with probability p_benign (per execution).
+def benign_check(task):
+  p_benign = task_set_info[task.id][4]
+  benign = 1 if random.random() < p_benign else 0
+  return benign
 
 def initialize_tasks():
   for task_info in task_set_info:
@@ -74,7 +82,7 @@ def initialize_tasks():
                 task.remaining_exec_time, task.deadline, -1, 0, 0])
     
     # Initialize the list storing the number of violation of each task.
-    output_num_violation.append([task.id, 0, math.floor(timeout/task_info[2])])
+    output_num_violation.append([task.id, 0, 0, math.floor(timeout/task_info[2])])
 
 def execute_task(task, until):
   global current_time
@@ -84,35 +92,42 @@ def execute_task(task, until):
     sys.exit("Error: the time tries to go back.")
   elif execution_time == 0:
     # TODO: Is this an error?
-    print(f"Warning: The task is peeked {task.id} but the execution time is 0.")
+    print(f"Warning: At {current_time}, the task {task.id} is peeked but the execution time is 0.")
   task.remaining_exec_time = task.remaining_exec_time - execution_time
   current_time = until
 
+def _schedule_task(task, action, deadline, arrival_time, remaining_exec_time, num_reexec, num_success):
+  task.deadline = deadline
+  task.arrival_time = arrival_time
+  task.remaining_exec_time = remaining_exec_time
+  task.num_reexec = num_reexec
+  task.num_success = num_success
+  logger.verbose(f"{action}: At {current_time}, task {task.id}, arrival time {task.arrival_time}, exec time {remaining_exec_time}," +
+                 f"deadline {task.deadline}, num_reexec {task.num_reexec}, num_success, {task.num_success}")
+  output_log.append([current_time, action, task.id, task.arrival_time,
+                  task.remaining_exec_time, task.deadline, -1, task.num_reexec, task.num_success])
+
 # Reschedule a task.
-def reschedule_task(task, has_failed=False):
+def reschedule_task(task, has_due_occured=False):
   id = task.id
   task.remaining_exec_time = task_set_info[id][1] # Execution time
-  # print(f"Time: {current_time} ID: {task.id}, num_success: {task.num_success}")
-  if not has_failed and task.num_success == min_success:
+  if not has_due_occured and task.num_success == min_success:
     # We don't need to reexecute this task again. Schedule the next task.
-    logger.verbose(f"The task {task.id} reaches the minimum required successful execution.")
-    # print(f"The task {task.id} reaches the minimum required successful execution.")
+    logger.verbose(f"At {current_time}, the task {task.id} reaches the minimum required successful execution.")
   else:
     # The execution was not successful or the number of successful execution is not enough.
-    if task.num_reexec < max_reexec:
+    if task.num_reexec <  max_reexec:
       # The number of reexecution does not exceed the boundary.
       if current_time < task.deadline:
-        logger.verbose(f"Reschedule the task {task.id}. Is the last attempt failed: {has_failed}. The number of successful execution: {task.num_success}")
+        logger.verbose(f"Reschedule the task {task.id}. Has DUE occured: {has_due_occured}. The number of successful execution: {task.num_success}")
         # Can schedule the same task again.
-        task.arrival_time = current_time
-        task.num_reexec += 1
-        output_log.append([current_time, 'reschedule', id, task.arrival_time,
-                    task.remaining_exec_time, task.deadline, -1, task.num_reexec, task.num_success])
+        _schedule_task(task, 'reschedule', task.deadline, current_time,
+                   task_set_info[id][1], task.num_reexec + 1, task.num_success)
         return
       elif current_time == task.deadline:
         # Can't schedule the task again (automatically drop it). Instead, schedule the next task.
         logger.verbose(f"Current time {current_time} is identical to the deadline {task.deadline}. Can't re-execute.")
-        output_num_violation[task.id][1] += 1
+        output_num_violation[task.id][2] += 1
         output_log.append([current_time, 'drop(violation)', id, current_time,
                         task.remaining_exec_time, task.deadline, -1, task.num_reexec, task.num_success])
       else: # current time > task.deadline
@@ -124,14 +139,10 @@ def reschedule_task(task, has_failed=False):
       output_log.append([current_time, 'drop(overrun)', id, task.arrival_time,
                       0, task.deadline, -1, task.num_reexec, task.num_success])
 
-  # Schedule the next task.
-  task.num_reexec = 0
-  task.num_success = 0
-  task.arrival_time = task.deadline
-  task.deadline = task.arrival_time + task_set_info[id][2] # Arrival time + Period
+  # Schedule the next task
+  # task, action, deadline, arrival_time, remaining_exec_time, num_reexec, num_success
+  _schedule_task(task, 'schedule', task.deadline + task_set_info[id][2], task.deadline, task_set_info[id][1], 0, 0)
 
-  output_log.append([current_time, 'schedule', id, task.arrival_time,
-                  task.remaining_exec_time, task.deadline, -1, task.num_reexec, task.num_success])
 
 
 def edf_schedulability_test():
@@ -183,19 +194,22 @@ def edf_schedulability_test():
           execute_task(task_to_process, expected_finish_time)
 
           # TODO: Check whether the task has failed. If it has failed, rescheudle it.
-          fail = False
-          if has_failed(task_set_info[task_to_process.id][3]):
+          has_due_occured = False
+          if due_check(task):
             logger.verbose(f"The test has failed with the proability {task_set_info[task_to_process.id][3]}")
-            task_to_process.num_success = 0
-            fail = True
-          else:
-            logger.verbose(f"The test has succeeded with the proability {1 - task_set_info[task_to_process.id][3]}.")
+            has_due_occured = True
+          elif benign_check(task):
+            logger.verbose(f"The test has succeeded with the proability {task_set_info[task_to_process.id][4]}.")
             task_to_process.num_success += 1
+          else:
+            logger.verbose(f"SDC occurs with the proability {1 - task_set_info[task_to_process.id][3] - task_set_info[task_to_process.id][4]}.")
+            task_to_process.num_success += 1
+            # TODO: If majority voting happens, SDC rate should decreased.
           output_log.append([current_time, 'finish', task_to_process.id, task_to_process.arrival_time,
-                         task_to_process.remaining_exec_time, task_to_process.deadline, fail, 
+                         task_to_process.remaining_exec_time, task_to_process.deadline, has_due_occured, 
                          task.num_reexec, task.num_success])
           # Schedule the next task
-          reschedule_task(task_to_process, fail)
+          reschedule_task(task_to_process, has_due_occured)
         elif time_to_advance == task_to_process.deadline:
           # Deadline violation occurs before the preemption happens.
           # Run the current task until the deadline, drop it, and find the new task to execute.
@@ -306,7 +320,7 @@ def main():
   output_file = f"output_{base_name}.csv"
   df1 = pd.DataFrame(output_log, columns=['Time', 'Action', 'ID', 'ArrivalTime', 'RemainingExecutionTime', 'Deadline', 'Failed', 'NumReExec', 'NumSuccess'])
   empty_column = pd.DataFrame({'': [''] * len(df1)})
-  df2 = pd.DataFrame(output_num_violation, columns=['ID', 'NumViolation', 'NumTotalScheduled'])
+  df2 = pd.DataFrame(output_num_violation, columns=['ID', 'NumOverrun', 'NumViolation', 'NumTotalScheduled'])
   # df2.astype(int)
   df_concat = pd.concat([df1, empty_column, df2], axis=1)
   # df_concat = pd.concat([df1.reset_index(drop=True), df2.reset_index(drop=True)], axis=1)
