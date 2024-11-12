@@ -24,18 +24,17 @@ class Task:
   period: int
   due_portion: float
   sdc_portion: float
-  fr_min: float
+  fr_hour: float
 
 time_unit = 1e-4 # Time unit is 100 us.
 # time_unit = 0.001 # Time unit is 1 ms.
 # time_unit = 1 # Time unit is 1 s.
-k = 60 / time_unit
+k = 3600 / time_unit
 
 p_due_unit = 0
 p_benign_unit = 0
 
-required_failure_rates_hours = [1e-3, 1e-5, 1e-7, 1e-9]
-required_failure_rates = [1 - (1 - rate) ** (1/k) for rate in required_failure_rates_hours] # rate per min
+required_failure_rates = [1e-3, 1e-5, 1e-7, 1e-9]
 due_sdc_rates = [[0.264, 0.019], [0.268, 0.037], [0.224, 0.019], [0.279, 0.019], [0.266, 0.028], [0.296, 0.009], [0.255, 0.019]]
 
 def uunifast(n, u):
@@ -56,41 +55,26 @@ def find_max_reexec_Reghenzani(task, lb):
   max_reexec_Reghenzani = 0
   while True:
     p_fault_exec = 1 - (1 - p_unit) ** (task.execution_time) # Eq 1
-    p_fault_reexec = p_fault_exec ** (1 + max_reexec_Reghenzani) # Eq 3
+    p_fault_re_exec = p_fault_exec ** (1 + max_reexec_Reghenzani) # Eq 3
 
-    fr_exec = 1 - ((1 - task.fr_min) ** (task.period / k))
+    fr_exec = 1 - ((1 - task.fr_hour) ** (task.period / k))
 
-    if p_fault_reexec < fr_exec:
-      return max_reexec_Reghenzani, p_fault_reexec
+    if p_fault_re_exec < fr_exec:
+      return max_reexec_Reghenzani, p_fault_re_exec
     max_reexec_Reghenzani += 1
-
-# def compute_p_fault_Reghenzani(task, lb, max_reexec_Reghenzani):
-#   p_unit = 1 - ((1 - lb) ** (1 / k)) # Eq 4
-#   p_fault_exec = 1 - (1 - p_unit) ** (task.execution_time) # Eq 1
-#   p_fault_reexec = p_fault_exec ** (1 + max_reexec_Reghenzani) # Eq 3
-
-#   return p_fault_reexec
 
 def find_max_reexec_RTailor(task, lb):
   p_due_unit = 1 - ((1 - lb * task.due_portion) ** (1 / k)) # Eq 6
   max_reexec_RTailor = 0
   while True:
     p_due_exec = 1 - (1 - p_due_unit) ** (task.execution_time) # Eq 9
-    p_due_reexec = p_due_exec ** (1 + max_reexec_RTailor) # Eq 12
+    p_due_re_exec = p_due_exec ** (1 + max_reexec_RTailor) # Eq 12
 
-    fr_exec = 1 - ((1 - task.fr_min) ** (task.period / k))
+    fr_exec = 1 - ((1 - task.fr_hour) ** (task.period / k))
 
-    if p_due_reexec < fr_exec:
-      return max_reexec_RTailor, p_due_reexec
+    if p_due_re_exec < fr_exec:
+      return max_reexec_RTailor, p_due_re_exec
     max_reexec_RTailor += 1
-
-def compute_p_due_reexec(task, lb, max_reexec_RTailor):
-  p_due_unit = 1 - ((1 - lb * task.due_portion) ** (1 / k)) # Eq 6
-
-  p_due_exec = 1 - (1 - p_due_unit) ** (task.execution_time) # Eq 9
-  p_due_reexec = p_due_exec ** (1 + max_reexec_RTailor) # Eq 12
-
-  return p_due_reexec
 
 def compute_p_sdc(task, lb, max_reexec, max_proact):
   p_due_unit = 1 - ((1 - lb * task.due_portion) ** (1 / k)) # Eq 6
@@ -118,17 +102,9 @@ def compute_p_sdc(task, lb, max_reexec, max_proact):
     p_sdc_reexec += p_completed_m * p_sdc_m # Eq 13
   return p_sdc_reexec
 
-def find_max_proactive(task, lb, max_reexec):
-  for max_proact_cand in range(1, max_reexec + 2, 2):
-    p_sdc_reexec = compute_p_sdc(task, lb, max_reexec, max_proact_cand)
-    if p_sdc_reexec < task.fr_min:
-      return max_proact_cand
-  return -1
-
 def generate_task_set(n, lb, u):
 
   tasks = []
-  output = []
   while True:
     utilizations = uunifast(n, u)
     # utilizations = [0.05, 0.1, 0.05, 0.1, 0.3]
@@ -138,42 +114,61 @@ def generate_task_set(n, lb, u):
       # Assign a random period.
       # period = random.randint(50, 1000)
       period = random.randint(500, 10000)
-
-      max_reexec_RTailor = 0
-      already_found_RTailor = False
-      for max_reexec_cand in range (0, 10):
-        execution_time = math.floor(utilizations[i] * period / (1 + max_reexec_cand))
-        if execution_time == 0:
-          zero_detected = True
-          break
-        fr_index = random.randint(0, len(required_failure_rates) -1)
-        fr_min = required_failure_rates[fr_index] # Allocate a required failure rate.
-        due_portion, sdc_portion = due_sdc_rates[random.randint(0, len(due_sdc_rates) - 1)]
-        
-        new_task = Task(id=i, execution_time=execution_time, period=period, due_portion=due_portion, sdc_portion=sdc_portion, fr_min=fr_min)
-        p_due_reexec = compute_p_due_reexec(new_task, lb, max_reexec_cand)
-
-        fr_exec = 1 - ((1 - new_task.fr_min) ** (new_task.period / k))
-        if p_due_reexec < fr_exec:
-          if not already_found_RTailor:
-            max_reexec_RTailor = max_reexec_cand
-          max_proact_cand = find_max_proactive(new_task, lb, max_reexec_cand)
-          if max_proact_cand == -1:
-            continue
-          else:
-            tasks.append(new_task)
-            output.append([new_task.id, new_task.execution_time, new_task.period, new_task.due_portion, new_task.sdc_portion, new_task.fr_min, required_failure_rates_hours[fr_index], max_reexec_RTailor, max_reexec_cand, max_proact_cand])
-            break
-
-      if zero_detected:
+      execution_time = math.floor(utilizations[i] * period / (1 + 2)) # Assume max_reexec is less than 3
+      if execution_time == 0:
+        zero_detected = True
         break
+      fr_hour = required_failure_rates[random.randint(0, len(required_failure_rates) - 1)] # Allocate a required failure rate.
+      due_portion, sdc_portion = due_sdc_rates[random.randint(0, len(due_sdc_rates) - 1)]
+      tasks.append(Task(id=i, execution_time=execution_time, period=period, due_portion=due_portion, sdc_portion=sdc_portion, fr_hour=fr_hour))
     if zero_detected:
       logger.debug("Zero detected.")
       tasks = []
     else:
       break
-  
-  df = pd.DataFrame(output, columns=['id', 'ET', 'Period', 'DUE', 'SDC', 'RequiredFailureRate', 'RequiredRateHour', 'N_RTailor', 'N', 'M'])
+
+  # Now we have tasks. Let's compute N and M using P_due and P_sdc.
+  output = []
+  for task in tasks:
+    fr_exec = 1 - ((1 - task.fr_hour) ** (task.period / k))
+
+    max_reexec_Reghenzani, p_fault_re_exec = find_max_reexec_Reghenzani(task, lb)
+    max_reexec_RTailor, p_due_re_exec = find_max_reexec_RTailor(task, lb)
+
+    if max_reexec_Reghenzani > 2 or max_reexec_RTailor > 2:
+      sys.exit("N larger than 3 found.")
+
+    # p_sdc_Reghenzani = compute_p_sdc(task, max_reexec_Reghenzani, 1)
+    p_sdc_RTailor = compute_p_sdc(task, lb, max_reexec_RTailor, 1)
+
+    # p_actual_failure_Reghenzani = p_fault_re_exec + p_sdc_Reghenzani
+    p_actual_failure_RTailor = p_due_re_exec + p_sdc_RTailor
+
+    # does_Reghenzani_satisfy = p_actual_failure_Reghenzani < fr_exec
+    does_RTailor_satisfy = p_actual_failure_RTailor < fr_exec
+
+    if not does_RTailor_satisfy:
+      # N is 0, 1, or 2.
+      # Check with (N, M) = (2, 1) and (2, 3)
+      # Reuse the previous result if N is already 2.
+      p_sdc_n_2_m_1 = 0
+      p_actual_failure_n_2_m_1 = 0
+      if max_reexec_RTailor == 2:
+        p_sdc_n_2_m_1 = p_sdc_RTailor
+        p_actual_failure_n_2_m_1 = p_sdc_RTailor
+      else:
+        p_sdc_n_2_m_1 = compute_p_sdc(task, lb, 2, 1)
+        p_actual_failure_n_2_m_1 = p_due_re_exec + p_sdc_n_2_m_1
+      
+      p_sdc_n_2_m_3 = compute_p_sdc(task, lb, 2, 3)
+      p_actual_failure_n_2_m_3 = p_due_re_exec + p_sdc_n_2_m_3
+
+      does_n_2_m_1_satisfy = p_actual_failure_n_2_m_1 < fr_exec
+      does_n_2_m_3_satisfy = p_actual_failure_n_2_m_3 < fr_exec
+      output.append([task.id, task.execution_time, task.period, task.fr_hour, max_reexec_Reghenzani, max_reexec_RTailor, does_RTailor_satisfy, does_n_2_m_1_satisfy, does_n_2_m_3_satisfy, fr_exec, p_due_re_exec, p_sdc_RTailor, p_actual_failure_RTailor, p_sdc_n_2_m_1, p_sdc_n_2_m_3, ])
+    else:
+      output.append([task.id, task.execution_time, task.period, task.fr_hour, max_reexec_Reghenzani, max_reexec_RTailor, does_RTailor_satisfy, -1, -1, fr_exec, p_due_re_exec, p_sdc_RTailor, p_actual_failure_RTailor, -1, -1])
+  df = pd.DataFrame(output, columns=['id', 'ET', 'Period', 'RequiredFailureRate', 'N_Reghenzani', 'N_RTailor', 'does_RTailor_satisfy', 'does_n_2_m_1_satisfy', 'does_n_2_m_3_satisfy', 'ScaledFailureRate', 'p_due_RTailor', 'p_sdc_RTailor', 'p_actual_failure_RTailor', 'p_sdc_n_2_m_1', 'p_sdc_n_2_m_3'])
   df.to_csv('output_test.csv', index=False)
 
 def main_loop(n, lb, u):
@@ -201,15 +196,16 @@ def main():
     # To test only 1 task, put 1 as the first argument.
     # Number of tasks, fault rate, total utilization.
     # generate_task_set(5, 1e-2, 0.25)
-    main_loop(10, 1e-2, 0.5)
+    main_loop(50, 1e-2, 0.33)
     exit()
 
   # Make tuples of (n, NU, Lambda)
   for n in [5, 10, 25, 50]:
     for lb in [1e-2, 1e-3, 1e-4, 1e-5]:
+      u = 0.33
+      main_loop(n, lb, u)
       # for u in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1]:
-      for u in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
-        main_loop(n, lb, u)
+      # for u in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
         
 if __name__ == "__main__":
   main()
