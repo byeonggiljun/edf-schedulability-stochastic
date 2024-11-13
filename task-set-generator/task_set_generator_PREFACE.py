@@ -272,17 +272,17 @@ def main_loop(n, lb, lb_unit, u):
 
   num_success = 0
   num_fail = 0
-  num_tasks = 1000
-  for i in range(1, num_tasks + 1):
+  num_task_sets = 1000
+  for i in range(1, num_task_sets + 1):
     success = generate_task_set(n, lb, u, base_directory, i)
     if success:
       num_success += 1
     else:
       num_fail += 1
-  if num_success + num_fail != num_tasks:
-    sys.exit(f"ERROR: num_success {num_success} + num_fail {num_fail} != num_tasks {num_tasks}")
+  if num_success + num_fail != num_task_sets:
+    sys.exit(f"ERROR: num_success {num_success} + num_fail {num_fail} != num_task_sets {num_task_sets}")
 
-  return lb_unit.name + str(lb_exponent), num_fail, num_tasks
+  return lb_unit.name + str(lb_exponent), num_fail, num_task_sets
 
 def main():
   global logger
