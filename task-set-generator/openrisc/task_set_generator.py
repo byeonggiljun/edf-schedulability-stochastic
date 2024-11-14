@@ -33,12 +33,13 @@ class Task:
   sdc_portion: float
   fr_index: float
   max_reexec_Reghenzani: int
+  new_max_reexec_Reghenzani: int
   max_reexec_RTailor: int
   new_max_reexec_RTailor: int
   max_reexec_PREFACE: int
   max_proact_PREFACE: int
 
-time_unit = 1e-3 # Time unit is 1 ms.
+time_unit = 1e-4 # Time unit is 1 ms.
 # time_unit = 0.001 # Time unit is 1 ms.
 # time_unit = 1 # Time unit is 1 s.
 k = 0
@@ -77,6 +78,17 @@ def compute_p_due_reexec(task, lb, max):
   # print(f"p_due_reexec = {p_due_reexec}, p_due_exec = {p_due_exec}")
 
   return p_due_reexec
+
+def compute_p_fault_RTailor(task, lb, max):
+  p_due_sdc_unit = 1 - ((1 - lb * (task.due_portion + task.sdc_portion)) ** (1 / k)) # Eq 2
+  # print(f"lb = {lb}, due_portion = {task.due_portion}, k = {k}, p_due_unit = {p_due_unit}")
+
+  p_due_sdc_exec = 1 - (1 - p_due_sdc_unit) ** (task.execution_time) # Eq 3
+  # print(f"p_due_unit = {p_due_unit}, exec time = {task.execution_time}, p_due_exec = {p_due_exec}")
+  p_due_sdc_reexec = p_due_sdc_exec ** (1 + max) # Eq 5
+  # print(f"p_due_reexec = {p_due_reexec}, p_due_exec = {p_due_exec}")
+
+  return p_due_sdc_reexec
 
 def compute_p_sdc(task, lb, max_reexec, max_proact):
   # print(f"***********compute_p_sdc with max_reexec {max_reexec}, max_proact {max_proact}*************")
@@ -145,50 +157,85 @@ def find_max_reexec_proact(task, lb):
       break
   # print(f"max_reexec = {max_reexec}, max_proact = {max_proact}")
 
-# def find_new_max_reexec(task, lb, p_sdc, fr_exec):
-#   logger.debug("--------------------------")
-#   logger.debug(f"Fail with n = {task.max_reexec_RTailor}")
-#   # Check if the requirement can be met by increasing n
-#   p_due = 
-#   logger.debug(f"p_due = {p_due_RTailor} p_sdc = {p_sdc}, fr_exec = {fr_exec}")
-#   # sys.exit("p_sdc < fr_exec")
-#   new_max_reexec_found = False
-#   for new_max_reexec_cand in range(task.max_reexec_RTailor, 10):
-#     p_due_RTailor = compute_p_due_reexec(task, lb, new_max_reexec_cand)
-#     if p_due_RTailor + p_sdc < fr_exec:
-#       new_max_reexec_found = True
-#       task.new_max_reexec_RTailor = new_max_reexec_cand
-#       logger.debug(f"Success with n = {new_max_reexec_cand}")
-#       logger.debug(f"N_PREFACE = {task.max_reexec_PREFACE}, M_PREFACE = {task.max_proact_PREFACE}")
-#       break
-#   if not new_max_reexec_found:
-#     sys.exit("new n larger than 9")
+def compute_avg_utilization(task, lb, max_reexec, max_proact):
+  # print(f"***********compute_p_sdc with max_reexec {max_reexec}, max_proact {max_proact}*************")
+  p_due_unit = 1 - ((1 - lb * task.due_portion) ** (1 / k)) # Eq 6
+  # print(f"p_due_unit = {p_due_unit}, p_sdc_unit = {p_sdc_unit}, p_benign_unit = {p_benign_unit}")
+  
+  p_due_exec = 1 - (1 - p_due_unit) ** (task.execution_time) # Eq 9
+  # print(f"p_due_exec = {p_due_exec}, p_sdc_exec = {p_sdc_exec}, p_benign_exec = {p_benign_exec}")
 
+  avg_utilization = 0
+  verify = 0
+  for m in range(0, max_proact + 1): # from 1 to max_proact
+    # print(f"*********m = {m}**********")
+    p_completed_m = 0
+    if m < max_proact:
+      # print(f"m = {m} < max_proact = {max_proact}")
+      p_completed_m = math.comb((1 + max_reexec), m) * (p_due_exec ** (max_reexec + 1 - m)) * ((1 - p_due_exec) ** m) #Eq 14-1
+      avg_utilization += task.execution_time * (1 + max_reexec) * p_completed_m / task.period
+    elif m == max_proact:
+      # print(f"m = {m} = max_proact = {max_proact}")
+      for n in range(m, 2 + max_reexec): # from M to 1 + N
+        # print(f"n = {n}, math.comb({n - 1}, {m - 1}) = {math.comb(n - 1, m - 1)}, p_due_exec^{n - m}, (1 - p_due_exec)^{m}")
+        prob = math.comb(n - 1, m - 1) * (p_due_exec ** (n - m)) * ((1 - p_due_exec) ** m) # Eq 14-2
+        avg_utilization += task.execution_time * n * prob / task.period
+        p_completed_m += math.comb(n - 1, m - 1) * (p_due_exec ** (n - m)) * ((1 - p_due_exec) ** m) # Eq 14-2
+
+    # Execution time
+    # print(f"avg = {avg_utilization} ET = {task.execution_time}, m = {m}, p_completed_m = {p_completed_m}, period = {task.period}")
+
+    verify += p_completed_m
+  # if verify != 1 :
+  #   print("Not 1")
+  # else:
+  #   print("Is 1")
+  return avg_utilization
+
+###############################
 def generate_task_set(n, lb, u, base_directory, task_set_id):
   tasks = []
   output = []
-  utilizations = uunifast(n, u)
 
-  for i in range(0, n):
-    # Assign a random period.
-    period = random.randint(50, 1000)
+  zero_detected = False
+  while True:
+    utilizations = uunifast(n, u)
+    for i in range(0, n):
+      # Assign a random period.
+      period = random.randint(500, 10000)
 
-    fr_index = random.randint(0, len(required_failure_rates) -1)
-    # fr_index = 3
-    due_portion, sdc_portion = due_sdc_rates[random.randint(0, len(due_sdc_rates) - 1)]
-    execution_time = math.floor(utilizations[i] * period)
-    new_task = Task(id=i, execution_time=execution_time, period=period, due_portion=due_portion, sdc_portion=sdc_portion,
-                    fr_index=fr_index, max_reexec_RTailor=-1, new_max_reexec_RTailor = -1,
-                    max_reexec_Reghenzani=-1, max_reexec_PREFACE=-1, max_proact_PREFACE=-1)
-    tasks.append(new_task)
-  
+      fr_index = random.randint(0, len(required_failure_rates) -1)
+      # fr_index = 3
+      due_portion, sdc_portion = due_sdc_rates[random.randint(0, len(due_sdc_rates) - 1)]
+      execution_time = math.floor(utilizations[i] * period)
+      if execution_time == 0:
+        zero_detected = True
+        break
+      new_task = Task(id=i, execution_time=execution_time, period=period, due_portion=due_portion, sdc_portion=sdc_portion,
+                      fr_index=fr_index, max_reexec_Reghenzani=-1, new_max_reexec_Reghenzani=-1, max_reexec_RTailor=-1,
+                       new_max_reexec_RTailor = -1, max_reexec_PREFACE=-1, max_proact_PREFACE=-1)
+      tasks.append(new_task)
+    if zero_detected:
+      tasks = []
+      zero_detected = False
+    else:
+      break
+
+
   total_utilization_Reghenzani = 0
   meet_fr_Reghenzani = True
+  new_Reghenzani_possible = True
+  new_total_utilization_Reghenzani = 0
+  avg_utilization_new_Reghenzani = 0
+
   total_utilization_RTailor = 0
+  meet_fr_RTailor = True
   new_RTailor_possible = True
   new_total_utilization_RTailor = 0
-  meet_fr_RTailor = True
+  avg_utilization_new_RTailor = 0
+
   total_utilization_PREFACE = 0
+  avg_utilization_PREFACE = 0
   for task in tasks:
     required_fr = required_failure_rates[task.fr_index]
     fr_exec = 1 - ((1 - required_fr) ** (task.period / k))
@@ -199,19 +246,37 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
       required_fr = required_failure_rates[task.fr_index] # Allocate a required failure rate.
       p_due_reexec = compute_p_due_reexec(task, lb, max_reexec_cand)
       p_sdc_m_1 = compute_p_sdc(task, lb, max_reexec_cand, 1)
-    
+
       if not N_Reghenzani_found:
         p_fault_Reghenzani = compute_p_fault_Reghenzani(task, lb, max_reexec_cand)
         if p_fault_Reghenzani < required_fr:
           N_Reghenzani_found = True
           task.max_reexec_Reghenzani = max_reexec_cand
+          task.new_max_reexec_Reghenzani = max_reexec_cand
           total_utilization_Reghenzani += task.execution_time * (1 + task.max_reexec_Reghenzani) / task.period
 
           if p_due_reexec + p_sdc_m_1 > fr_exec:
             meet_fr_Reghenzani = False
+            if p_sdc_m_1 > fr_exec:
+              new_Reghenzani_possible = False
+            if new_Reghenzani_possible and p_sdc_m_1 < fr_exec:
+              # There's a chance to meet the requirement by increasing N.
+              # Also, until now, there was no task that is impossible to meet the requirement using only N.
+              new_max_reexec_Reghenzani = max_reexec_cand
+              while True:
+                if new_max_reexec_Reghenzani > 10:
+                  sys.exit("n larger than 10")
+                new_p_due_reexec = compute_p_due_reexec(task, lb, new_max_reexec_Reghenzani)
+                if new_p_due_reexec + p_sdc_m_1 < fr_exec:
+                  task.new_max_reexec_Reghenzani = new_max_reexec_Reghenzani
+                  break
+                new_max_reexec_Reghenzani += 1
+          new_total_utilization_Reghenzani += task.execution_time * (1 + task.new_max_reexec_Reghenzani) / task.period
+          avg_utilization_new_Reghenzani += compute_avg_utilization(task, lb, task.new_max_reexec_Reghenzani, 1)
 
       if not N_RTailor_found:
-        if p_due_reexec < required_fr:
+        p_fault_RTailor = compute_p_fault_RTailor(task, lb, max_reexec_cand)
+        if p_fault_RTailor < required_fr:
           N_RTailor_found = True
           task.max_reexec_RTailor = max_reexec_cand
           task.new_max_reexec_RTailor = max_reexec_cand
@@ -231,10 +296,10 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
                 new_p_due_reexec = compute_p_due_reexec(task, lb, new_max_reexec_RTailor)
                 if new_p_due_reexec + p_sdc_m_1 < fr_exec:
                   task.new_max_reexec_RTailor = new_max_reexec_RTailor
-                  new_total_utilization_RTailor += task.execution_time * (1 + task.new_max_reexec_RTailor) / task.period
                   break
                 new_max_reexec_RTailor += 1
           new_total_utilization_RTailor += task.execution_time * (1 + task.new_max_reexec_RTailor) / task.period
+          avg_utilization_new_RTailor += compute_avg_utilization(task, lb, task.new_max_reexec_RTailor, 1)
 
       if not N_PREFACE_found:
         max_proact_PREFACE = find_max_proactive(task, lb, max_reexec_cand, p_due_reexec)
@@ -244,29 +309,35 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
           task.max_proact_PREFACE = max_proact_PREFACE
           total_utilization_PREFACE += task.execution_time * (1 + task.max_reexec_PREFACE) / task.period
 
+          avg_utilization_PREFACE += compute_avg_utilization(task, lb, task.max_reexec_PREFACE, task.max_proact_PREFACE)
+
       if N_Reghenzani_found and N_RTailor_found and N_PREFACE_found:
         break
 
     output.append([task.id, task.execution_time, task.period, task.due_portion, task.sdc_portion,
-                   required_failure_rates_hours[task.fr_index], task.max_reexec_Reghenzani,
+                   required_failure_rates_hours[task.fr_index], task.max_reexec_Reghenzani, task.new_max_reexec_Reghenzani,
                    task.max_reexec_RTailor, task.new_max_reexec_RTailor, task.max_reexec_PREFACE, task.max_proact_PREFACE])
     
     if (task.max_reexec_Reghenzani == -1 or task.max_reexec_RTailor == -1 or 
     task.max_reexec_PREFACE == -1 or task.max_proact_PREFACE == -1):
       sys.exit(f"N_Regehnzani = {task.max_reexec_Reghenzani}, N_RTailor = {task.max_reexec_RTailor}, N = {task.max_reexec_PREFACE}, M = {max_proact_PREFACE}")
   
-  feasible_Reghenzani = total_utilization_Reghenzani < 1
-  feasible_RTailor = total_utilization_RTailor < 1
+  feasible_Reghenzani = meet_fr_Reghenzani and total_utilization_Reghenzani < 1
+  new_feasible_Reghenzani = new_Reghenzani_possible and new_total_utilization_Reghenzani < 1
+  feasible_RTailor = meet_fr_RTailor and total_utilization_RTailor < 1
   new_feasible_RTailor = new_RTailor_possible and new_total_utilization_RTailor < 1
   feasible_PREFACE = total_utilization_PREFACE < 1
   # result = [feasible_Reghenzani, meet_fr_Reghenzani, feasible_RTailor, meet_fr_RTailor, feasible_PREFACE]
-  df_result = pd.DataFrame({'util_Reghenzani':[total_utilization_Reghenzani], 'meet_fr_RTailor':[meet_fr_RTailor], 'util_RTailor':[total_utilization_RTailor], 'possible_new_RTailor':[new_RTailor_possible], 'new_util_RTailor':[new_total_utilization_RTailor], 'util_PREFACE':[total_utilization_PREFACE]})
-  df_tasks = pd.DataFrame(output, columns=['id', 'ET', 'Period', 'DUE', 'SDC', 'Lambda', 'N_Reghenzani', 'N_RTailor', 'new_N_RTailor', 'N', 'M'])
+  df_result = pd.DataFrame({'feasible_Reghenzani':[feasible_Reghenzani], 'new_feasible_Reghenzani': [new_feasible_Reghenzani], 'new_util_Reghenzani': [new_total_utilization_Reghenzani], 'avg_util_new_Reghenzani':[avg_utilization_new_Reghenzani],\
+                            'feasible_RTailor':[feasible_RTailor], 'new_feasible_RTailor':[new_feasible_RTailor], 'new_util_RTailor':[new_total_utilization_RTailor], 'avg_util_new_RTailor':[avg_utilization_new_RTailor],\
+                            'util_PREFACE':[total_utilization_PREFACE], 'avg_util_PREFACE':[avg_utilization_PREFACE]})
+  df_tasks = pd.DataFrame(output, columns=['id', 'ET', 'Period', 'DUE', 'SDC', 'Lambda', 'N_Reghenzani', 'N_new_Reghenzani', 'N_RTailor', 'new_N_RTailor', 'N', 'M'])
   df = pd.concat([df_result, df_tasks], ignore_index=True)
   
   output_path = os.path.join(base_directory, f"TaskSet{task_set_id}.csv")
   df.to_csv(output_path, index=False)
-  return feasible_Reghenzani, meet_fr_Reghenzani, feasible_RTailor, meet_fr_RTailor, new_feasible_RTailor, feasible_PREFACE
+  return feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor,\
+      feasible_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor, avg_utilization_PREFACE
   # Now, check the p_sdc.
   # Count
   # 1. Is this task set scheduable by Reghenzani?
@@ -314,29 +385,40 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
   os.makedirs(base_directory, exist_ok=True)
   # generate_task_set(n, lb, u, base_directory, 1)
 
-  num_infeasible = 0
+  num_Reghenzani_success = 0
+  num_new_Reghenzani_success = 0
   num_RTailor_success = 0
   num_new_RTailor_success = 0
   num_PREFACE_success = 0
-  num_fail = 0
-  for i in range(1, num_task_sets + 1):
-    feasible_Reghenzani, meet_fr_Reghenzani, feasible_RTailor, meet_fr_RTailor, new_feasible_RTailor, feasible_PREFACE = \
-      generate_task_set(n, lb, u, base_directory, i)
-    if not feasible_RTailor:
-      num_infeasible += 1
-    elif meet_fr_RTailor:
-      # Among feasible using RTailor, tasks that fail to meet the failure requirement.
-      num_RTailor_success += 1
-    elif new_feasible_RTailor:
-      # Task that can meet the failure requirement by increasing N.
-      num_new_RTailor_success += 1
-    elif feasible_PREFACE:
-      # Task that can meet the failure requirement by increasing M.
-      num_PREFACE_success += 1
-    else:
-      num_fail += 1
+  
+  mean_avg_util_new_Reghenzani = 0
+  mean_avg_util_new_RTailor = 0
+  mean_avg_util_PREFACE = 0
 
-  return lb_unit.name + str(lb_exponent), num_infeasible, num_RTailor_success, num_new_RTailor_success, num_PREFACE_success, num_fail
+  num_all_success = 0
+  for i in range(1, num_task_sets + 1):
+    feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor,\
+      feasible_PREFACE, avg_utilization_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor,\
+        = generate_task_set(n, lb, u, base_directory, i)
+    if feasible_Reghenzani:
+      num_Reghenzani_success += 1
+    if new_feasible_Reghenzani:
+      num_new_Reghenzani_success += 1
+    if feasible_RTailor:
+      num_RTailor_success += 1
+    if new_feasible_RTailor:
+      num_new_RTailor_success += 1
+    if feasible_PREFACE:
+      num_PREFACE_success += 1
+    if new_feasible_Reghenzani and new_feasible_RTailor and feasible_PREFACE:
+      mean_avg_util_new_Reghenzani = ((mean_avg_util_new_Reghenzani * num_all_success) + avg_utilization_new_Reghenzani) / (num_all_success + 1)
+      mean_avg_util_new_RTailor = ((mean_avg_util_new_RTailor * num_all_success) + avg_utilization_new_RTailor) / (num_all_success + 1)
+      mean_avg_util_PREFACE = ((mean_avg_util_PREFACE * num_all_success) + avg_utilization_PREFACE) / (num_all_success + 1)
+      num_all_success += 1
+
+  return lb_unit.name + str(lb_exponent), num_Reghenzani_success, num_new_Reghenzani_success, \
+    num_RTailor_success, num_new_RTailor_success, num_PREFACE_success,\
+      mean_avg_util_new_Reghenzani, mean_avg_util_new_RTailor, mean_avg_util_PREFACE
 
 def test(n, lb, lb_unit, u):
   global k, required_failure_rates
@@ -379,11 +461,12 @@ def main():
   # Make tuples of (n, NU, Lambda)
   for n in [5, 10, 25, 50]:
     df = pd.DataFrame()
-    for u in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+    for u in [0.1, 0.2, 0.3, 0.4, 0.5]:
       output = []
       for lb in [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
-        name, r1, r2, r3, r4, r5 = main_loop(n, lb, TimeUnit.HOUR, u, num_task_sets)
-        output.append([u, name, r1, r2, r3, r4, r5, num_task_sets])
+        name, r1, r2, r3, r4, r5, r6, r7, r8 = main_loop(n, lb, TimeUnit.HOUR, u, num_task_sets)
+        output.append([u, name, r1, r2, r3, r4, r5, r6, r7, r8])
+
       # for lb in [1e-2, 1e-1]:
       #   name, r1, r2, r3, r4 = main_loop(n, lb, TimeUnit.MIN, u, num_task_sets)
       #   output.append([u, name, r1, r2, r3, r4, num_task_sets])
@@ -391,7 +474,9 @@ def main():
       #   name, r1, r2, r3, r4 = main_loop(n, lb, TimeUnit.SEC, u, num_task_sets)
       #   output.append([u, name, r1, r2, r3, r4, num_task_sets])
       util_number = get_u_num(u)
-      dff = pd.DataFrame(output, columns=['Utilization', 'Lambda', 'infeasible', 'RTailor_success', 'new_RTailor_success', 'PREFACE_success', 'num_fail', 'total'])
+      dff = pd.DataFrame(output, columns=['Utilization', 'Lambda', 'Reghenzani_success', 'new_Reghenzani_success',\
+                                          'RTailor_success', 'new_RTailor_success', 'PREFACE_success',\
+                                            'avg_util_new_Reghenzani', 'avg_util_new_RTailor', 'avg_util_PREFACE'])
       df = pd.concat([df, dff], axis=1)
       output_path = os.path.join(os.getcwd(), f"n{n}", f"u{util_number}", f"n{n}_u{util_number}_total.csv")
       df.to_csv(output_path, index=False)
