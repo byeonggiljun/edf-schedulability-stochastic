@@ -1,7 +1,7 @@
 # set terminal pdfcairo enhanced crop color size 40.0,30.0 solid linewidth 4 font "Helvetica, 270"
 set key autotitle columnhead
-set terminal pdfcairo enhanced size 40 cm, 30 cm 
-set output "successRatiokey.pdf"
+set terminal pdfcairo enhanced
+set output "key.pdf"
 
 set style fill solid 0.5 border -1
 set datafile separator ","
@@ -32,9 +32,8 @@ set key horizontal outside
 # # set title "Utilization = 0.1" font ", 16"
 set tmargin 10
 set key spacing 1.5
-set key font ",24"
-plot 'n5/n5_total.csv' using 0:3 lt 2 lw 3 with linespoints title "Reghenzani {/Times-Italic et al.}", \
-    '' using 0:4 lt 3 lw 3 with linespoints title "Reghenzani {/Times-Italic et al.} considering SDC", \
+plot 'n5/n5_total.csv' using 0:3 lt 2 lw 3 with linespoints title "Reghenzani", \
+    '' using 0:4 lt 3 lw 3 with linespoints title "Reghenzani considering SDC", \
     '' using 0:5 lt 6 lw 3 with linespoints title "RTailor", \
     '' using 0:6 lt 4 lw 3 with linespoints title "RTailor considering SDC", \
-    '' using 0:7 lt 8 lc rgb 'red' lw 3 with linespoints title "PREFACE" 
+    '' using 0:7 lt 8 lw 3 with linespoints title "PREFACE" 
