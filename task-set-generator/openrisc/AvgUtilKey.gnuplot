@@ -6,15 +6,16 @@ set output "AvgUtilkey.pdf"
 set datafile separator ","
 # set multiplot layout 2, 2
 
-xx = 0.8 # the margine between graphs
-ww = 0.7 # width of graphs
+xx = 1.29 # the margine between graphs
+xxx = 0.43
+ww = 0.6 # width of graphs
 
 # # set multiplot
 set style fill solid 0.5 border -1
 set boxwidth 0.85
 
-set xtics ('' 0, '' 3, '' 6, '' 9)
-set ytics ("" 0, "" 0.1, "" 0.2, "" 0.3, "" 0.4, "" 0.5)
+set xtics ('' 0, '' 4, '' 8, '' 12)
+set ytics ("" 0, "" 0.3, "" 0.6, "" 0.9, "" 1.0)
 
 # set xrange [0:7]
 set yrange [0:0.51]
@@ -27,6 +28,7 @@ set key spacing 1.5
 
 set key font ", 24"
 #####################################################
-plot 'n25/n25_total.csv' every ::1::4 using (3*$0-xx):8 lt 3 w boxes title "Reghenzani {/Times-Italic et al.} considering SDC",\
-    '' every ::1::4 using (3*$0):9 lt 4 w boxes title "RTailor considering SDC", \
-    '' every ::1::4 using (3*$0+xx):10 lt 8 lc rgb 'red' w boxes title "PREFACE"
+plot 'n25/n25_total.csv' every ::1::4 using (4*$0-xx):9 lt 3 w boxes title "Reghenzani {/Times-Italic et al.} considering SDC",\
+    '' every ::1::4 using (4*$0-xxx):10 lt 4 w boxes title "RTailor considering SDC", \
+    '' every ::1::4 using (4*$0+xxx):11 lt 10 w boxes title "TMR", \
+    '' every ::1::4 using (4*$0+xx):12 lt 8 lc rgb 'red' w boxes title "PREFACE"

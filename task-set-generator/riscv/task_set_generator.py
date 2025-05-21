@@ -353,8 +353,13 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
   new_total_utilization_RTailor = 0
   avg_utilization_new_RTailor = 0
 
+  total_utilization_TMR = 0
+  meet_fr_TMR = True
+  avg_utilization_TMR = 0
+
   total_utilization_PREFACE = 0
   avg_utilization_PREFACE = 0
+
   for task in tasks:
     required_fr = required_failure_rates[task.fr_index]
     # Calculate fr_exec with mpmath precision
@@ -362,12 +367,21 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
     period_mp = mpmath.mpf(str(task.period))
     k_mp = mpmath.mpf(str(k))
     fr_exec = float(mpmath.mpf('1') - mpmath.power(mpmath.mpf('1') - required_fr_mp, period_mp / k_mp))
-    
+
+    # Test TMR
+    p_due_n_3 = compute_p_due_reexec(task, lb, 3)
+    p_sdc_m_3 = compute_p_sdc(task, lb, 3, 3)
+    if p_due_n_3 + p_sdc_m_3 >= fr_exec:
+      meet_fr_TMR = False
+    total_utilization_TMR += task.execution_time * 3 / task.period
+    avg_utilization_TMR += compute_avg_utilization(task, lb, 3, 3)
+
+    # Test Reghenzani, RTailor, and PREFACE
     N_Reghenzani_found = False
     N_RTailor_found = False
     N_PREFACE_found = False
     for max_reexec_cand in range(0, 10):
-      required_fr = required_failure_rates[task.fr_index] # Allocate a required failure rate.
+      # required_fr = required_failure_rates[task.fr_index] # Allocate a required failure rate.
       p_due_reexec = compute_p_due_reexec(task, lb, max_reexec_cand)
       p_sdc_m_1 = compute_p_sdc(task, lb, max_reexec_cand, 1)
 
@@ -437,6 +451,8 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
 
       if N_Reghenzani_found and N_RTailor_found and N_PREFACE_found:
         break
+    if task.max_reexec_PREFACE > 2:
+      print(f"Warning: N > 2, N = {task.max_reexec_PREFACE}")
 
     output.append([task.id, task.execution_time, task.period, task.due_portion, task.sdc_portion,
                    required_failure_rates_hours[task.fr_index], task.max_reexec_Reghenzani, task.new_max_reexec_Reghenzani,
@@ -450,18 +466,22 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
   new_feasible_Reghenzani = new_Reghenzani_possible and new_total_utilization_Reghenzani < 1
   feasible_RTailor = meet_fr_RTailor and total_utilization_RTailor < 1
   new_feasible_RTailor = new_RTailor_possible and new_total_utilization_RTailor < 1
+  feasible_TMR = meet_fr_TMR and total_utilization_TMR < 1
   feasible_PREFACE = total_utilization_PREFACE < 1
   # result = [feasible_Reghenzani, meet_fr_Reghenzani, feasible_RTailor, meet_fr_RTailor, feasible_PREFACE]
   # Create dataframes for output - convert mpmath values to float for pandas compatibility
-  df_result = pd.DataFrame({'feasible_Reghenzani':[feasible_Reghenzani], 
-                           'new_feasible_Reghenzani': [new_feasible_Reghenzani], 
-                           'new_util_Reghenzani': [float(new_total_utilization_Reghenzani)], 
+  df_result = pd.DataFrame({'feasible_Reghenzani':[feasible_Reghenzani],
+                           'new_feasible_Reghenzani': [new_feasible_Reghenzani],
+                           'new_util_Reghenzani': [float(new_total_utilization_Reghenzani)],
                            'avg_util_new_Reghenzani':[float(avg_utilization_new_Reghenzani)],
-                           'feasible_RTailor':[feasible_RTailor], 
-                           'new_feasible_RTailor':[new_feasible_RTailor], 
-                           'new_util_RTailor':[float(new_total_utilization_RTailor)], 
+                           'feasible_RTailor':[feasible_RTailor],
+                           'new_feasible_RTailor':[new_feasible_RTailor],
+                           'new_util_RTailor':[float(new_total_utilization_RTailor)],
                            'avg_util_new_RTailor':[float(avg_utilization_new_RTailor)],
-                           'util_PREFACE':[float(total_utilization_PREFACE)], 
+                           'feasible_TMR':[feasible_TMR],
+                           'util_TMR':[float(new_total_utilization_RTailor)],
+                           'avg_util_TMR':[float(total_utilization_TMR)],
+                           'util_PREFACE':[float(avg_utilization_TMR)],
                            'avg_util_PREFACE':[float(avg_utilization_PREFACE)]})
   
   # Convert mpmath values in output to float for pandas
@@ -482,8 +502,8 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
   
   output_path = os.path.join(base_directory, f"TaskSet{task_set_id}.csv")
   df.to_csv(output_path, index=False)
-  return feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor,\
-      feasible_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor, avg_utilization_PREFACE
+  return feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor, feasible_TMR,\
+      feasible_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor, avg_utilization_TMR, avg_utilization_PREFACE
 
 
 def get_u_num(u):
@@ -538,16 +558,18 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
   num_new_Reghenzani_success = 0
   num_RTailor_success = 0
   num_new_RTailor_success = 0
+  num_TMR_success = 0
   num_PREFACE_success = 0
   
   mean_avg_util_new_Reghenzani = mpmath.mpf('0')
   mean_avg_util_new_RTailor = mpmath.mpf('0')
+  mean_avg_util_TMR = mpmath.mpf('0')
   mean_avg_util_PREFACE = mpmath.mpf('0')
 
   num_all_success = 0
   for i in range(1, num_task_sets + 1):
-    feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor,\
-      feasible_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor, avg_utilization_PREFACE\
+    feasible_Reghenzani, new_feasible_Reghenzani, feasible_RTailor, new_feasible_RTailor, feasible_TMR, \
+      feasible_PREFACE, avg_utilization_new_Reghenzani, avg_utilization_new_RTailor, avg_utilization_TMR, avg_utilization_PREFACE\
         = generate_task_set(n, lb_mp, u_mp, base_directory, i)
         
     if feasible_Reghenzani:
@@ -558,14 +580,17 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
       num_RTailor_success += 1
     if new_feasible_RTailor:
       num_new_RTailor_success += 1
+    if feasible_TMR:
+      num_TMR_success += 1
     if feasible_PREFACE:
       num_PREFACE_success += 1
       
-    if new_feasible_Reghenzani and new_feasible_RTailor and feasible_PREFACE:
+    if new_feasible_Reghenzani and new_feasible_RTailor and feasible_TMR and feasible_PREFACE:
       # Convert to mpmath for high-precision average calculation
       num_all_success_mp = mpmath.mpf(str(num_all_success))
       avg_utilization_new_Reghenzani_mp = mpmath.mpf(str(avg_utilization_new_Reghenzani))
       avg_utilization_new_RTailor_mp = mpmath.mpf(str(avg_utilization_new_RTailor))
+      avg_utilization_TMR_mp = mpmath.mpf(str(avg_utilization_TMR))
       avg_utilization_PREFACE_mp = mpmath.mpf(str(avg_utilization_PREFACE))
       
       # Calculate running averages with high precision
@@ -573,13 +598,15 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
                                       avg_utilization_new_Reghenzani_mp) / (num_all_success_mp + mpmath.mpf('1'))
       mean_avg_util_new_RTailor = ((mean_avg_util_new_RTailor * num_all_success_mp) + 
                                    avg_utilization_new_RTailor_mp) / (num_all_success_mp + mpmath.mpf('1'))
+      mean_avg_util_TMR = ((mean_avg_util_TMR * num_all_success_mp) + 
+                                   avg_utilization_TMR_mp) / (num_all_success_mp + mpmath.mpf('1'))
       mean_avg_util_PREFACE = ((mean_avg_util_PREFACE * num_all_success_mp) + 
                                avg_utilization_PREFACE_mp) / (num_all_success_mp + mpmath.mpf('1'))
       num_all_success += 1
 
   return lb_unit.name + str(lb_exponent), num_Reghenzani_success, num_new_Reghenzani_success, \
-    num_RTailor_success, num_new_RTailor_success, num_PREFACE_success,\
-      float(mean_avg_util_new_Reghenzani), float(mean_avg_util_new_RTailor), float(mean_avg_util_PREFACE)
+    num_RTailor_success, num_new_RTailor_success, num_TMR_success, num_PREFACE_success,\
+      float(mean_avg_util_new_Reghenzani), float(mean_avg_util_new_RTailor), float(mean_avg_util_TMR), float(mean_avg_util_PREFACE)
 
 
 def test(n, lb, lb_unit, u):
@@ -632,8 +659,8 @@ def main():
   num_task_sets = args.ntask[0]
 
   # Make tuples of (n, NU, Lambda)
-  # for n in [5, 10, 25, 50]:
-  for n in [50]:
+  for n in [5, 10, 25, 50]:
+  # for n in [50]:
     df = pd.DataFrame()
     for u in [0.1, 0.2, 0.3, 0.4, 0.5]:
       output = []
@@ -642,13 +669,13 @@ def main():
         lb_mp = mpmath.mpf(str(lb))
         u_mp = mpmath.mpf(str(u))
         
-        name, r1, r2, r3, r4, r5, r6, r7, r8 = main_loop(n, lb_mp, TimeUnit.HOUR, u_mp, num_task_sets)
-        output.append([float(u_mp), name, r1, r2, r3, r4, r5, r6, r7, r8])
+        name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10 = main_loop(n, lb_mp, TimeUnit.HOUR, u_mp, num_task_sets)
+        output.append([float(u_mp), name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10])
 
       util_number = get_u_num(u)
       dff = pd.DataFrame(output, columns=['Utilization', 'Lambda', 'Reghenzani_success', 'new_Reghenzani_success',\
-                                          'RTailor_success', 'new_RTailor_success', 'PREFACE_success',\
-                                            'avg_util_new_Reghenzani', 'avg_util_new_RTailor', 'avg_util_PREFACE'])
+                                          'RTailor_success', 'new_RTailor_success', 'TMR_sucess', 'PREFACE_success',\
+                                            'avg_util_new_Reghenzani', 'avg_util_new_RTailor', 'avg_util_TMR', 'avg_util_PREFACE'])
       df = pd.concat([df, dff], axis=1)
       output_path = os.path.join(os.getcwd(), f"n{n}", f"u{util_number}", f"n{n}_u{util_number}_total.csv")
       df.to_csv(output_path, index=False)

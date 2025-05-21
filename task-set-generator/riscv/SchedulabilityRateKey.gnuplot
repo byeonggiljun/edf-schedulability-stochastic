@@ -36,4 +36,5 @@ plot 'n5/n5_total.csv' using 0:3 lt 2 lw 3 with linespoints title "Reghenzani", 
     '' using 0:4 lt 3 lw 3 with linespoints title "Reghenzani considering SDC", \
     '' using 0:5 lt 6 lw 3 with linespoints title "RTailor", \
     '' using 0:6 lt 4 lw 3 with linespoints title "RTailor considering SDC", \
-    '' using 0:7 lt 8 lw 3 with linespoints title "PREFACE" 
+    '' using 0:7 lt 1 lc rgb 'purple' lw 3 with linespoints title "TMR", \
+    '' using 0:8 lt 8 lc rgb 'red' lw 3 with linespoints title "PREFACE" 
