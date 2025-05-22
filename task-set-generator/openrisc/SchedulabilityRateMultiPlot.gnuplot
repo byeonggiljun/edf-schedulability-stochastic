@@ -58,120 +58,120 @@ plot 'n50/n50_total.csv' using 0:3 lt 2 lw 3 with linespoints notitle, \
 
 #####################   Utilization 0.2   ###############################
 # set title "Utilization = 0.2" font ", 16"
-plot 'n5/n5_total.csv' using 0:15 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:16 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:17 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:18 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:19 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:20 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n5/n5_total.csv' using 0:17 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:18 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:19 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:20 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:21 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:22 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n10/n10_total.csv' using 0:15 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:16 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:17 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:18 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:19 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:20 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n10/n10_total.csv' using 0:17 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:18 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:19 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:20 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:21 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:22 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n25/n25_total.csv' using 0:15 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:16 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:17 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:18 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:19 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:20 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n25/n25_total.csv' using 0:17 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:18 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:19 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:20 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:21 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:22 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n50/n50_total.csv' using 0:15 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:16 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:17 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:18 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:19 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:20 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n50/n50_total.csv' using 0:17 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:18 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:19 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:20 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:21 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:22 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
 #####################   Utilization 0.3   ###############################
 # set title "Utilization = 0.3" font ", 16"
-plot 'n5/n5_total.csv' using 0:27 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:28 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:29 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:30 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:31 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:32 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n5/n5_total.csv' using 0:31 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:32 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:33 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:34 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:35 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:36 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n10/n10_total.csv' using 0:27 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:28 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:29 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:30 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:31 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:32 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n10/n10_total.csv' using 0:31 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:32 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:33 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:34 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:35 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:36 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n25/n25_total.csv' using 0:27 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:28 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:29 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:30 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:31 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:32 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n25/n25_total.csv' using 0:31 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:32 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:33 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:34 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:35 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:36 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n50/n50_total.csv' using 0:27 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:28 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:29 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:30 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:31 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:32 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n50/n50_total.csv' using 0:31 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:32 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:33 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:34 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:35 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:36 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
 #####################   Utilization 0.4   ###############################
 # set title "Utilization = 0.4" font ", 16"
-plot 'n5/n5_total.csv' using 0:39 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:40 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:41 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:42 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:43 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:44 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n5/n5_total.csv' using 0:45 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:46 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:47 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:48 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:49 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:50 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n10/n10_total.csv' using 0:39 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:40 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:41 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:42 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:43 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:44 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n10/n10_total.csv' using 0:45 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:46 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:47 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:48 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:49 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:50 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n25/n25_total.csv' using 0:39 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:40 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:41 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:42 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:43 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:44 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n25/n25_total.csv' using 0:45 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:46 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:47 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:48 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:49 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:50 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n50/n50_total.csv' using 0:39 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:40 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:41 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:42 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:43 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:44 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n50/n50_total.csv' using 0:45 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:46 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:47 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:48 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:49 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:50 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
 #####################   Utilization 0.5   ###############################
 # set title "Utilization = 0.5" font ", 16"
-plot 'n5/n5_total.csv' using 0:51 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:52 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:53 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:54 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:55 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:56 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n5/n5_total.csv' using 0:59 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:60 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:61 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:62 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:63 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:64 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n10/n10_total.csv' using 0:51 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:52 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:53 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:54 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:55 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:56 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n10/n10_total.csv' using 0:59 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:60 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:61 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:62 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:63 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:64 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n25/n25_total.csv' using 0:51 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:52 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:53 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:54 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:55 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:56 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n25/n25_total.csv' using 0:59 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:60 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:61 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:62 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:63 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:64 lt 8 lc rgb 'red' lw 3 with linespoints notitle
 
-plot 'n50/n50_total.csv' using 0:51 lt 2 lw 3 with linespoints notitle, \
-    '' using 0:52 lt 3 lw 3 with linespoints notitle, \
-    '' using 0:53 lt 6 lw 3 with linespoints notitle, \
-    '' using 0:54 lt 4 lw 3 with linespoints notitle, \
-    '' using 0:55 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
-    '' using 0:56 lt 8 lc rgb 'red' lw 3 with linespoints notitle
+plot 'n50/n50_total.csv' using 0:59 lt 2 lw 3 with linespoints notitle, \
+    '' using 0:60 lt 3 lw 3 with linespoints notitle, \
+    '' using 0:61 lt 6 lw 3 with linespoints notitle, \
+    '' using 0:62 lt 4 lw 3 with linespoints notitle, \
+    '' using 0:63 lt 1 lc rgb 'purple' lw 3 with linespoints notitle, \
+    '' using 0:64 lt 8 lc rgb 'red' lw 3 with linespoints notitle

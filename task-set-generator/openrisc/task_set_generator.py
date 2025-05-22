@@ -479,9 +479,9 @@ def generate_task_set(n, lb, u, base_directory, task_set_id):
                            'new_util_RTailor':[float(new_total_utilization_RTailor)],
                            'avg_util_new_RTailor':[float(avg_utilization_new_RTailor)],
                            'feasible_TMR':[feasible_TMR],
-                           'util_TMR':[float(new_total_utilization_RTailor)],
-                           'avg_util_TMR':[float(total_utilization_TMR)],
-                           'util_PREFACE':[float(avg_utilization_TMR)],
+                           'util_TMR':[float(total_utilization_TMR)],
+                           'avg_util_TMR':[float(avg_utilization_TMR)],
+                           'util_PREFACE':[float(total_utilization_PREFACE)],
                            'avg_util_PREFACE':[float(avg_utilization_PREFACE)]})
   
   # Convert mpmath values in output to float for pandas
@@ -564,7 +564,9 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
   mean_avg_util_new_Reghenzani = mpmath.mpf('0')
   mean_avg_util_new_RTailor = mpmath.mpf('0')
   mean_avg_util_TMR = mpmath.mpf('0')
+  mean_avg_util_TMR_any = mpmath.mpf('0')
   mean_avg_util_PREFACE = mpmath.mpf('0')
+  mean_avg_util_PREFACE_only = mpmath.mpf('0')
 
   num_all_success = 0
   for i in range(1, num_task_sets + 1):
@@ -603,10 +605,26 @@ def main_loop(n, lb, lb_unit, u, num_task_sets):
       mean_avg_util_PREFACE = ((mean_avg_util_PREFACE * num_all_success_mp) + 
                                avg_utilization_PREFACE_mp) / (num_all_success_mp + mpmath.mpf('1'))
       num_all_success += 1
+      
+    if feasible_PREFACE:
+      # Convert to mpmath for high-precision average calculation
+      num_PREFACE_success_mp = mpmath.mpf(str(num_PREFACE_success))
+      avg_utilization_PREFACE_mp = mpmath.mpf(str(avg_utilization_PREFACE))
+      
+      # Calculate running averages with high precision
+      mean_avg_util_PREFACE_only = ((mean_avg_util_PREFACE_only * num_PREFACE_success_mp) + 
+                               avg_utilization_PREFACE_mp) / (num_PREFACE_success_mp + mpmath.mpf('1'))
+    
+    # TMR Avg Util Any
+    num_TMR_mp = mpmath.mpf(str(i - 1))
+    avg_util_TMR_any_mp = mpmath.mpf(str(avg_utilization_TMR))
+    mean_avg_util_TMR_any = ((mean_avg_util_TMR_any * num_TMR_mp) + 
+                             avg_util_TMR_any_mp) / (num_TMR_mp + mpmath.mpf('1'))
 
   return lb_unit.name + str(lb_exponent), num_Reghenzani_success, num_new_Reghenzani_success, \
     num_RTailor_success, num_new_RTailor_success, num_TMR_success, num_PREFACE_success,\
-      float(mean_avg_util_new_Reghenzani), float(mean_avg_util_new_RTailor), float(mean_avg_util_TMR), float(mean_avg_util_PREFACE)
+      float(mean_avg_util_new_Reghenzani), float(mean_avg_util_new_RTailor), float(mean_avg_util_TMR), \
+        float(mean_avg_util_TMR_any), float(mean_avg_util_PREFACE), float(mean_avg_util_PREFACE_only)
 
 
 def test(n, lb, lb_unit, u):
@@ -669,13 +687,14 @@ def main():
         lb_mp = mpmath.mpf(str(lb))
         u_mp = mpmath.mpf(str(u))
         
-        name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10 = main_loop(n, lb_mp, TimeUnit.HOUR, u_mp, num_task_sets)
-        output.append([float(u_mp), name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10])
+        name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 = main_loop(n, lb_mp, TimeUnit.HOUR, u_mp, num_task_sets)
+        output.append([float(u_mp), name, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12])
 
       util_number = get_u_num(u)
       dff = pd.DataFrame(output, columns=['Utilization', 'Lambda', 'Reghenzani_success', 'new_Reghenzani_success',\
                                           'RTailor_success', 'new_RTailor_success', 'TMR_sucess', 'PREFACE_success',\
-                                            'avg_util_new_Reghenzani', 'avg_util_new_RTailor', 'avg_util_TMR', 'avg_util_PREFACE'])
+                                            'avg_util_new_Reghenzani', 'avg_util_new_RTailor', 'avg_util_TMR', 'avg_util_TMR_any', \
+                                              'avg_util_PREFACE', 'avg_util_PREFACE_only'])
       df = pd.concat([df, dff], axis=1)
       output_path = os.path.join(os.getcwd(), f"n{n}", f"u{util_number}", f"n{n}_u{util_number}_total.csv")
       df.to_csv(output_path, index=False)
